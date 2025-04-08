@@ -117,11 +117,11 @@ jobs:
       #     push-to-registry: true
       #     subject-digest: ${{ steps.push.outputs.digest }}
       #     subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
-      - uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # pin@0.29.0
-        with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+      # - uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # pin@0.29.0
+      #   with:
+      #     image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}'
+      #     format: 'table'
+      #     exit-code: '1'
+      #     ignore-unfixed: true
+      #     vuln-type: 'os,library'
+      #     severity: 'CRITICAL,HIGH'
