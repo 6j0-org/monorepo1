@@ -41,8 +41,8 @@ jobs:
       REGISTRY: ghcr.io
       ORG_NAME: 6j0-org
 
-      # Using "%2F" instead of "/" because we have to use this in a REST API.
-      IMAGE_NAME: ${{ github.repository }}%2F${{ matrix.image }}
+      # Using "%2f" instead of "/" because we have to use this in a REST API.
+      IMAGE_NAME: ${{ github.repository }}%2f${{ matrix.image }}
 
     steps:
       - uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # pin@v3.3.0
