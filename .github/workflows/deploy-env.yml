@@ -1,0 +1,63 @@
+name: Deploy Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_env:
+        type: choice
+        options:
+          - dev
+          - staging
+          - alpha
+          - beta
+          - prod
+          - ninja
+      to_env:
+        type: choice
+        options:
+          - dev
+          - staging
+          - alpha
+          - beta
+          - prod
+          - ninja
+jobs:
+  deploy-env:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        image:
+          - app1
+          # - build-api
+          # - frontend
+          # - litellm
+          # - server-metrics-exporter
+          # - server
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}/${{ matrix.image }}
+    steps:
+      - uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # pin@v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          TAG=$(docker images --filter=reference='${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.from_env }}-*-*' --format "{{.Tag}}" | \
+          grep -E '^${{ github.event.inputs.from_env }}-[a-z0-9]+-[0-9]+$' | \
+          awk -F- '{print $0 " " $3}' | \
+          sort -k2 -nr | \
+          head -n1 | \
+          awk '{print $1}')
+          echo "Selected tag: $TAG"
+          docker pull \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}"
+          new_tag=$(echo ${TAG} | sed -E 's/.*-([^-]+)-([^-]+)/${{ github.event.inputs.to_env }}-\1-\2/')
+          docker tag \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}" \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${new_tag}"
+          docker push \
+            -a \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"

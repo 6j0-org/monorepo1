@@ -1,0 +1,39 @@
+name: Deploy Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      current_tag:
+        description: 'Current tag (e.g., dev-29906cb-1742412029)'
+        required: true
+      deploy_env:
+        type: choice
+        options:
+          - test 
+          - prod
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+jobs:
+  deploy-image:
+    runs-on: ubuntu-latest
+    permissions:
+      #contents: read
+      #id-token: write
+      packages: write
+    steps:
+      - uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # pin@v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          docker pull \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.current_tag }}"
+          new_tag=$(echo ${{ github.event.inputs.current_tag }} | sed -E 's/.*-([^-]+)-([^-]+)/${{ github.event.inputs.deploy_env }}-\1-\2/')
+          docker tag \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.current_tag }}" \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${new_tag}"
+          docker push \
+            -a \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
