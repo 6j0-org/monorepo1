@@ -6,6 +6,7 @@ on:
       from_env:
         type: choice
         options:
+          - main
           - dev
           - staging
           - alpha
@@ -15,6 +16,7 @@ on:
       to_env:
         type: choice
         options:
+          - main
           - dev
           - staging
           - alpha
