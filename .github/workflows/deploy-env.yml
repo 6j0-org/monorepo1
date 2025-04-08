@@ -47,13 +47,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
-          TAG=$(docker images --filter=reference='${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.from_env }}-*-*' --format "{{.Tag}}" | \
-          grep -E '^${{ github.event.inputs.from_env }}-[a-z0-9]+-[0-9]+$' | \
-          awk -F- '{print $0 " " $3}' | \
-          sort -k2 -nr | \
-          head -n1 | \
-          awk '{print $1}')
+          # TAG=$(docker images --filter=reference='${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.from_env }}-*-*' --format "{{.Tag}}" | \
+          # grep -E '^${{ github.event.inputs.from_env }}-[a-z0-9]+-[0-9]+$' | \
+          # awk -F- '{print $0 " " $3}' | \
+          # sort -k2 -nr | \
+          # head -n1 | \
+          # awk '{print $1}')
+
+          TAG=$(curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                  "https://api.github.com/users/6j0-org/packages/container/${{ env.IMAGE_NAME }}/versions" | \
+                  jq -r '.[].metadata.container.tags[]' | \
+                  grep -E '^${{ github.event.inputs.from_env }}-[a-z0-9]+-[0-9]+$' | \
+                  awk -F- '{print $0 " " $3}' | \
+                  sort -k2 -nr | \
+                  head -n1 | \
+                  awk '{print $1}')
+
           echo "Selected tag: $TAG"
+
           docker pull \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}"
           new_tag=$(echo ${TAG} | sed -E 's/.*-([^-]+)-([^-]+)/${{ github.event.inputs.to_env }}-\1-\2/')
