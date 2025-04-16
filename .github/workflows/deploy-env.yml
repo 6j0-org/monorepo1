@@ -3,6 +3,11 @@ name: Deploy Environment
 on:
   workflow_dispatch:
     inputs:
+      app1:
+        type: boolean
+      app2:
+        type: boolean
+
       from_env:
         type: choice
         options:
@@ -18,15 +23,28 @@ on:
           - test
           - prod
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      selected_options: ${{ steps.set-outputs.outputs.selected }}
+    steps:
+      - name: Collect selected options
+        id: set-outputs
+        run: |
+          selected=()
+          if [ "${{ github.event.inputs.app1 }}" = 'true' ]; then selected+=("app1"); fi
+          if [ "${{ github.event.inputs.app2 }}" = 'true' ]; then selected+=("app2"); fi
+          echo "selected=$(jq -c -n '$selected')" >> $GITHUB_OUTPUT
   deploy-env:
     runs-on: ubuntu-latest
     permissions:
       packages: write
     strategy:
       matrix:
-        image:
-          - app1
-          - app2
+        image: ${{ fromJSON(needs.prepare.outputs.selected_options) }}
+        # image:
+        #   - app1
+        #   - app2
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}/${{ matrix.image }}
