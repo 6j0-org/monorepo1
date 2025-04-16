@@ -22,26 +22,26 @@ on:
           - test
           - prod
 jobs:
-  prepare:
+  # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/running-variations-of-jobs-in-a-workflow
+  define-matrix:
     runs-on: ubuntu-latest
     outputs:
-      selected_options: ${{ steps.set-outputs.outputs.selected }}
+      images: ${{ steps.images.outputs.selected }}
     steps:
-      - name: Collect selected options
-        id: set-outputs
+      - name: Define images
+        id: images
         run: |
-          selected=()
           if [ "${{ github.event.inputs.app1 }}" = 'true' ]; then selected+=("app1"); fi
           if [ "${{ github.event.inputs.app2 }}" = 'true' ]; then selected+=("app2"); fi
-          echo "selected=$(jq -cn '$ARGS.positional' --args -- "${selected[@]}")"
           echo "selected=$(jq -cn '$ARGS.positional' --args -- "${selected[@]}")" >> $GITHUB_OUTPUT
   deploy-env:
     runs-on: ubuntu-latest
+    needs: define-matrix
     permissions:
       packages: write
     strategy:
       matrix:
-        image: ${{ fromJSON(needs.prepare.outputs.selected_options) }}
+        image: ${{ fromJSON(needs.define-matrix.outputs.images) }}
         # image:
         #   - app1
         #   - app2
