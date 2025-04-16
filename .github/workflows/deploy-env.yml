@@ -7,7 +7,6 @@ on:
         type: boolean
       app2:
         type: boolean
-
       from_env:
         type: choice
         options:
@@ -34,7 +33,7 @@ jobs:
           selected=()
           if [ "${{ github.event.inputs.app1 }}" = 'true' ]; then selected+=("app1"); fi
           if [ "${{ github.event.inputs.app2 }}" = 'true' ]; then selected+=("app2"); fi
-          echo "selected=$(jq -c -n '$selected')" >> $GITHUB_OUTPUT
+          echo "selected=$(jq -cn '$ARGS.positional' --args -- "${selected[@]}")" >> $GITHUB_OUTPUT
   deploy-env:
     runs-on: ubuntu-latest
     permissions:
