@@ -42,9 +42,6 @@ jobs:
     strategy:
       matrix:
         image: ${{ fromJSON(needs.define-matrix.outputs.images) }}
-        # image:
-        #   - app1
-        #   - app2
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}/${{ matrix.image }}
@@ -55,6 +52,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
+          set -x
 
           # github.repository outputs owner/repo_name, but we just need the repo_name.
           export github_repo=$(basename ${{ github.repository }})
