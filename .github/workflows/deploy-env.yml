@@ -33,6 +33,7 @@ jobs:
           selected=()
           if [ "${{ github.event.inputs.app1 }}" = 'true' ]; then selected+=("app1"); fi
           if [ "${{ github.event.inputs.app2 }}" = 'true' ]; then selected+=("app2"); fi
+          echo "selected=$(jq -cn '$ARGS.positional' --args -- "${selected[@]}")"
           echo "selected=$(jq -cn '$ARGS.positional' --args -- "${selected[@]}")" >> $GITHUB_OUTPUT
   deploy-env:
     runs-on: ubuntu-latest
