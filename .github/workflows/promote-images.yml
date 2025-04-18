@@ -28,7 +28,7 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.image }}" = 'all' ]]; then
             # If you update this, you need to update the image options array in the workflow_dispatch inputs above too.
-            selected='["app1","app2"]'
+            selected='["app1","app2","app3"]'
           else
             selected='["${{ github.event.inputs.image }}"]'
           fi
