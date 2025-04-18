@@ -52,7 +52,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
-          set -x
           from_env=$(echo '${{ github.event.inputs.promote }}' | cut -d' ' -f2)
           to_env=$(echo '${{ github.event.inputs.promote }}' | cut -d' ' -f4)
           # github.repository outputs owner/repo_name, but we just need the repo_name.
