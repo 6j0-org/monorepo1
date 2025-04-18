@@ -16,21 +16,19 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - api/**
-      - Dockerfile
       - .github/workflows/docker-build-push.yml
-      - .gitignore
-      - requirements.txt
+      - app1/.gitignore
+      - app1/Dockerfile
+      - app1/api/**
+      - app1/requirements.txt
   pull_request:
     branches: [ "main" ]
     paths:
-      - api/**
-      - Dockerfile
       - .github/workflows/docker-build-push.yml
-      - .gitignore
-      - requirements.txt
-
-
+      - app2/.gitignore
+      - app2/Dockerfile
+      - app2/api/**
+      - app2/requirements.txt
 jobs:
   docker:
     runs-on: ubuntu-latest
