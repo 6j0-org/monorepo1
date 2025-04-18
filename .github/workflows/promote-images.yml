@@ -23,12 +23,15 @@ jobs:
     outputs:
       images: ${{ steps.images.outputs.selected }}
     steps:
+      - uses: actions/checkout@v4
+      - run: |
+          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && chmod a+x /usr/local/bin/yq
       - name: Define images
         id: images
         run: |
           if [[ "${{ github.event.inputs.image }}" = 'all' ]]; then
-            # If you update this, you need to update the image options array in the workflow_dispatch inputs above too.
-            selected='["app1","app2","app3"]'
+            # Read the image options from the workflow file, excluding 'all'
+            selected=$(yq '.on.workflow_dispatch.inputs.image.options | select(. != "all") | join(",")' .github/workflows/promote-images.yml | sed 's/^/["/' | sed 's/$/"]/')
           else
             selected='["${{ github.event.inputs.image }}"]'
           fi
