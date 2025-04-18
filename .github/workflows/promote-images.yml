@@ -25,8 +25,6 @@ jobs:
       images: ${{ steps.images.outputs.selected }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      # - run: |
-      #     wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && chmod a+x /usr/local/bin/yq
       - name: Define images
         id: images
         run: |
@@ -36,7 +34,6 @@ jobs:
           else
             selected='["${{ github.event.inputs.image }}"]'
           fi
-          echo "selected=${selected}"
           echo "selected=${selected}" >> $GITHUB_OUTPUT
 
   promote-images:
@@ -58,17 +55,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
+          # github.repository outputs owner/repo_name, but we need just the repo_name in some places.
+          export github_repo=$(basename ${{ github.repository }})
+
           from_env=$(echo '${{ github.event.inputs.promote }}' | cut -d' ' -f2)
           to_env=$(echo '${{ github.event.inputs.promote }}' | cut -d' ' -f4)
-          # github.repository outputs owner/repo_name, but we just need the repo_name.
-          export github_repo=$(basename ${{ github.repository }})
+
           # https://docs.github.com/en/rest/packages/packages?apiVersion=2022-11-28#list-package-versions-for-a-package-owned-by-an-organization
           # Using "%2f" instead of "/" because we have to use this in a REST API.
           current_tag=$(curl -s -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/${github_repo}%2f${{ matrix.image }}/versions" | jq -r '.[].metadata.container.tags[]' | grep -E "^${from_env}-[0-9a-f]{7}-[0-9]+$" | sort -R | sort --field-separator=- -k 3 -r | head -n 1)
+
+          # Normally, I avoid catching and writing custom error messages, but the native "invalid reference format" message is particularly obtuse.
           if [[ -z "${current_tag}" ]]; then
             echo "ERROR: Could not find container with tag matching regex /${from_env}-[0-9a-f]{7}-[0-9]+/"
             exit 1
           fi
+
           docker pull \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${current_tag}"
           new_tag=$(echo ${current_tag} | sed -E "s/.*-([^-]+)-([^-]+)/${to_env}-\1-\2/")
