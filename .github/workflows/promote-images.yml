@@ -41,7 +41,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        image: ${{ needs.define-matrix.outputs.images }}
+        image: ${{ fromJSON(needs.define-matrix.outputs.images) }}
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}/${{ matrix.image }}
