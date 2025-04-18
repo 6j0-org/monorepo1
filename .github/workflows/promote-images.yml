@@ -5,6 +5,7 @@ on:
     inputs:
       image:
         type: choice
+        # If you update this, you need to update the image_options array in the define-matrix job below too.
         options:
           - all
           - app1
@@ -24,19 +25,14 @@ jobs:
       - name: Define images
         id: images
         run: |
+          # If you update this, you need to update the image options array in the workflow_dispatch inputs above too.
+          image_options='["app1", "app2"]'
           if [[ "${{ github.event.inputs.image }}" = 'all' ]]; then
-            # Get all options except 'all' using jq to parse the toJSON output of the choices
-            selected=($(echo '${{ toJSON(github.event.inputs.image.options) }}' | jq -r '.[] | select(. != "all")'))
-            echo "YOU CHOSE ALL"
-            echo "selected string = ${selected}"
-            echo "selected array = ${selected[@]}"
+            selected="${image_options}"
           else
-            selected=("${{ github.event.inputs.image }}")
-            echo "YOU CHOSE ${selected}"
-            echo "selected string = ${selected}"
-            echo "selected array = ${selected[@]}"
+            selected='["${{ github.event.inputs.image }}"]'
           fi
-          echo "selected=$(jq -cn '$ARGS.positional' --args -- "${selected[@]}")" >> $GITHUB_OUTPUT
+          echo "selected=${selected}" >> $GITHUB_OUTPUT
 
   promote-images:
     runs-on: ubuntu-latest
@@ -45,7 +41,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        image:  ${{ github.event.inputs.image }}
+        image: ${{ needs.define-matrix.outputs.images }}
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}/${{ matrix.image }}
