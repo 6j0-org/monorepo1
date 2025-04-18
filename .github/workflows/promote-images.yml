@@ -31,7 +31,7 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.image }}" = 'all' ]]; then
             # Read the image options from the workflow file, excluding 'all'
-            selected=$(yq -o json '.on.workflow_dispatch.inputs.image.options | del(.. | select(. == "all"))' .github/workflows/promote-images.yml)
+            selected="$(yq -o json '.on.workflow_dispatch.inputs.image.options | del(.. | select(. == "all"))' .github/workflows/promote-images.yml | jq -c .)"
           else
             selected='["${{ github.event.inputs.image }}"]'
           fi
