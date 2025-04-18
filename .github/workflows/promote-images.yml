@@ -5,7 +5,7 @@ on:
     inputs:
       image:
         type: choice
-        # If you update this, you need to update the image_options array in the define-matrix job below too.
+        # If you update this, you need to update the image list in in the define-matrix job below too.
         options:
           - all
           - app1
@@ -24,14 +24,14 @@ jobs:
     steps:
       - name: Define images
         id: images
-        # If you update this, you need to update the image options array in the workflow_dispatch inputs above too.
         run: |
-          image_options='["app1","app2"]'
           if [[ "${{ github.event.inputs.image }}" = 'all' ]]; then
-            selected="${image_options}"
+            # If you update this, you need to update the image options array in the workflow_dispatch inputs above too.
+            selected='["app1","app2"]'
           else
             selected='["${{ github.event.inputs.image }}"]'
           fi
+          echo "selected=${selected}"
           echo "selected=${selected}" >> $GITHUB_OUTPUT
 
   promote-images:
