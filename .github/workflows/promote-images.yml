@@ -44,6 +44,7 @@ jobs:
     permissions:
       packages: write
     strategy:
+      fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.define-matrix.outputs.images) }}
     env:
