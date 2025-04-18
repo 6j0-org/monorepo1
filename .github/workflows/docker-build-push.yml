@@ -14,21 +14,21 @@
 
 on:
   push:
-#     branches: [ "main" ]
-#     paths:
-#       - api/**
-#       - Dockerfile
-#       - .github/workflows/docker-build-push.yml
-#       - .gitignore
-#       - requirements.txt
-#   pull_request:
-#     branches: [ "main" ]
-#     paths:
-#       - api/**
-#       - Dockerfile
-#       - .github/workflows/docker-build-push.yml
-#       - .gitignore
-#       - requirements.txt
+#      branches: [ "main" ]
+#      paths:
+#        - api/**
+#        - Dockerfile
+#        - .github/workflows/docker-build-push.yml
+#        - .gitignore
+#        - requirements.txt
+#    pull_request:
+#      branches: [ "main" ]
+#      paths:
+#        - api/**
+#        - Dockerfile
+#        - .github/workflows/docker-build-push.yml
+#        - .gitignore
+#        - requirements.txt
 
 
 jobs:
@@ -57,8 +57,12 @@ jobs:
       #     username: ${{ secrets.DOCKER_USERNAME }}
       #     password: ${{ secrets.DOCKER_TOKEN }}
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4.2.2
+
+      # Using dev-${sha}-${timestamp} format for Flux: https://fluxcd.io/flux/guides/image-update/#imagepolicy-examples
       - id: output
-        run: echo "image_tag=$(git branch --show-current)-$(git rev-parse --short=7 HEAD)-$(git log -1 --pretty=%ct)" >> $GITHUB_OUTPUT
+        run: |
+          echo "image_tag=dev-$(git rev-parse --short=7 HEAD)-$(git log -1 --pretty=%ct)" | tee -a $GITHUB_OUTPUT
+
       - uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # pin@v5.6.1
         id: meta
         with:
