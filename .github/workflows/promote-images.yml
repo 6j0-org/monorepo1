@@ -24,9 +24,9 @@ jobs:
     steps:
       - name: Define images
         id: images
+        # If you update this, you need to update the image options array in the workflow_dispatch inputs above too.
         run: |
-          # If you update this, you need to update the image options array in the workflow_dispatch inputs above too.
-          image_options='["app1", "app2"]'
+          image_options='["app1","app2"]'
           if [[ "${{ github.event.inputs.image }}" = 'all' ]]; then
             selected="${image_options}"
           else
