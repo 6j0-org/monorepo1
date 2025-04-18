@@ -3,24 +3,17 @@ name: Promote Images
 on:
   workflow_dispatch:
     inputs:
-      app1:
-        type: boolean
-      app2:
-        type: boolean
-      from_env:
+      image:
         type: choice
         options:
-          - main
-          - dev
-          - test
-          - prod
-      to_env:
+          - all
+          - app1
+          - app2
+      promote:
         type: choice
         options:
-          - main
-          - dev
-          - test
-          - prod
+          - from dev to test
+          - from test to prod
 jobs:
   # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/running-variations-of-jobs-in-a-workflow
   define-matrix:
@@ -31,9 +24,20 @@ jobs:
       - name: Define images
         id: images
         run: |
-          if [ "${{ github.event.inputs.app1 }}" = 'true' ]; then selected+=("app1"); fi
-          if [ "${{ github.event.inputs.app2 }}" = 'true' ]; then selected+=("app2"); fi
+          if [[ "${{ github.event.inputs.image }}" = 'all' ]]; then
+            # Get all options except 'all' using jq to parse the toJSON output of the choices
+            selected=($(echo '${{ toJSON(github.event.inputs.image.options) }}' | jq -r '.[] | select(. != "all")'))
+            echo "YOU CHOSE ALL"
+            echo "selected string = ${selected}"
+            echo "selected array = ${selected[@]}"
+          else
+            selected=("${{ github.event.inputs.image }}")
+            echo "YOU CHOSE ${selected}"
+            echo "selected string = ${selected}"
+            echo "selected array = ${selected[@]}"
+          fi
           echo "selected=$(jq -cn '$ARGS.positional' --args -- "${selected[@]}")" >> $GITHUB_OUTPUT
+
   promote-images:
     runs-on: ubuntu-latest
     needs: define-matrix
@@ -41,7 +45,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        image: ${{ fromJSON(needs.define-matrix.outputs.images) }}
+        image:  ${{ github.event.inputs.image }}
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}/${{ matrix.image }}
@@ -52,14 +56,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
+          from_env=$(echo '${{ github.event.inputs.promote }}' | cut -d' ' -f2)
+          to_env=$(echo '${{ github.event.inputs.promote }}' | cut -d' ' -f4)
           # github.repository outputs owner/repo_name, but we just need the repo_name.
           export github_repo=$(basename ${{ github.repository }})
           # https://docs.github.com/en/rest/packages/packages?apiVersion=2022-11-28#list-package-versions-for-a-package-owned-by-an-organization
           # Using "%2f" instead of "/" because we have to use this in a REST API.
-          current_tag=$(curl -s -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/${github_repo}%2f${{ matrix.image }}/versions" | jq -r '.[].metadata.container.tags[]' | grep -E '^${{ github.event.inputs.from_env }}-[0-9a-f]{7}-[0-9]+$' | sort -R | sort --field-separator=- -k 3 -r | head -n 1; set +x)
+          current_tag=$(curl -s -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/${github_repo}%2f${{ matrix.image }}/versions" | jq -r '.[].metadata.container.tags[]' | grep -E '^${from_env}-[0-9a-f]{7}-[0-9]+$' | sort -R | sort --field-separator=- -k 3 -r | head -n 1; set +x)
           docker pull \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${current_tag}"
-          new_tag=$(echo ${current_tag} | sed -E 's/.*-([^-]+)-([^-]+)/${{ github.event.inputs.to_env }}-\1-\2/')
+          new_tag=$(echo ${current_tag} | sed -E 's/.*-([^-]+)-([^-]+)/${to_env}-\1-\2/')
           docker tag \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${current_tag}" \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${new_tag}"
