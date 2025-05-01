@@ -1,0 +1,13 @@
+name: testing a thing
+
+on:
+  push:
+    branches: [ "main" ]
+#  pull_request:
+#    branches: [ "main" ]
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+       echo I RAN 
