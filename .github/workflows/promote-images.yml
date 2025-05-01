@@ -21,7 +21,8 @@ jobs:
   # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/running-variations-of-jobs-in-a-workflow
   define-matrix:
     runs-on: ubuntu-latest
-    image: alpine
+    container:
+      image: alpine
     outputs:
       images: ${{ steps.images.outputs.selected }}
     steps:
